@@ -9,7 +9,7 @@ import java.util.Map;
 
 public interface RebelItemRepository extends JpaRepository<RebelItem, String> {
     @Query("select ri.item.name, sum(ri.numItems)/cast(count(ri.item.name) as float) from RebelItem ri " +
-            "where ri.numItems<>0" +
+            "where ri.numItems<>0 and ri.rebel.treasonReportNum < 3" +
             "group by ri.item.name")
     public List<Object[]> averageItems();
 

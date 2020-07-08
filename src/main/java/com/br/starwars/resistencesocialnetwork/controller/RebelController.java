@@ -4,6 +4,8 @@ import com.br.starwars.resistencesocialnetwork.domain.dataTransfer.LocationDTO;
 import com.br.starwars.resistencesocialnetwork.domain.dataTransfer.NegotiationDTO;
 import com.br.starwars.resistencesocialnetwork.domain.dataTransfer.RebelDTO;
 import com.br.starwars.resistencesocialnetwork.domain.dataTransfer.TreasonReportDTO;
+import com.br.starwars.resistencesocialnetwork.exception.NegotiationException;
+import com.br.starwars.resistencesocialnetwork.exception.RebelNotExistsException;
 import com.br.starwars.resistencesocialnetwork.service.RebelService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -32,7 +34,9 @@ public class RebelController {
         try{
             return ResponseEntity.status(201).body(rebelService.create(rebel));
         } catch (NullPointerException err){
-            return ResponseEntity.status(400).body(err.getMessage());
+            return ResponseEntity.status(400).body(new HashMap<String, String>() {{
+                put("message", err.getMessage());
+            }});
         }
     }
 
@@ -43,51 +47,51 @@ public class RebelController {
     private ResponseEntity updateLocation(@RequestBody LocationDTO location, @PathVariable String idRebel) {
         try{
             return ResponseEntity.status(200).body(rebelService.updateLocation(location, idRebel));
-        } catch (NullPointerException err){
-            return ResponseEntity.status(400).body(err.getMessage());
+        } catch (NullPointerException | RebelNotExistsException err){
+            return ResponseEntity.status(400).body(new HashMap<String, String>() {{
+                put("message", err.getMessage());
+            }});
         }
     }
 
     @PutMapping("/treason/report")
     @ApiOperation(value = "Reporta a traição de um rebelde.")
     private ResponseEntity treasonReport(@RequestBody TreasonReportDTO report) {
-        boolean reported = false;
+        boolean reported;
+        Map<String, String> message = new HashMap<>();
+
         try{
             reported = rebelService.treasonReport(report.getIdAccuser(), report.getIdAccused());
-        } catch (NullPointerException err){
-            return ResponseEntity.status(400).body(err.getMessage());
+        } catch (NullPointerException | RebelNotExistsException err){
+            message.put("message", err.getMessage());
+            return ResponseEntity.status(400).body(message);
         }
-        Map<String, String> message = new HashMap<>();
         if (reported) {
             message.put("message", "Rebel reported.");
             return ResponseEntity.status(200).body(message);
         }
-        message.put("message", "Rebel not registered in the database or has already been reported by you.");
+        message.put("message", "Rebel already been reported by you.");
         return ResponseEntity.status(401).body(message);
     }
 
     @PutMapping("/negotiate")
     @ApiOperation(value = "Realiza a troca de itens entre os rebeldes.")
     private ResponseEntity negotiate(@RequestBody NegotiationDTO negotiationDTO) {
-        boolean negotiated = false;
-        try{
-            negotiated= rebelService.negotiate(negotiationDTO);
-        } catch (NullPointerException err){
-            return ResponseEntity.status(400).body(err.getMessage());
-        }
         Map<String, String> message = new HashMap<>();
-        if (negotiated) {
-            message.put("message", "Item exchange successful.");
-            return ResponseEntity.status(200).body(message);
+        try{
+            rebelService.negotiate(negotiationDTO);
+        } catch (NullPointerException | NegotiationException err){
+            message.put("message", err.getMessage());
+            return ResponseEntity.status(400).body(message);
         }
-        message.put("message", "Item exchange not performed. Perhaps more points are needed, " +
-                "or items are being negotiated that either party does not own.");
-        return ResponseEntity.status(401).body(message);
+
+        message.put("message", "Item exchange successful.");
+        return ResponseEntity.status(200).body(message);
     }
 
     @GetMapping("/info/percentage/rebels")
     @ApiOperation(value = "Recebe a porcentagem de todos os rebeldes.")
-    private ResponseEntity<Map<String, String>> percentageOfRebels() {
+    private ResponseEntity percentageOfRebels() {
         Integer percentage = rebelService.percentageOfRebels();
         Map<String, String> message = new HashMap<>();
         message.put("percentage", percentage.toString());
@@ -96,7 +100,7 @@ public class RebelController {
 
     @GetMapping("/info/percentage/treason")
     @ApiOperation(value = "Recebe a porcentagem de todos os traidores da resistência.")
-    private ResponseEntity<Map<String, String>> percentageOfTreason() {
+    private ResponseEntity percentageOfTreason() {
         Integer percentage = rebelService.percentageOfTreason();
         Map<String, String> message = new HashMap<>();
         message.put("percentage", percentage.toString());
@@ -105,10 +109,17 @@ public class RebelController {
 
     @GetMapping("/isTraitor/{idTraitor}")
     @ApiOperation(value = "Identifica se um rebelde é um traidor.")
-    private ResponseEntity<Map<String, String>> isTraitor(@PathVariable String idTraitor) {
-        boolean isTraitor = rebelService.isTraitor(idTraitor);
+    private ResponseEntity isTraitor(@PathVariable String idTraitor) {
+        Boolean isTraitor;
+        Map<String, String> message = new HashMap<>();
+        try{
+            isTraitor = rebelService.isTraitor(idTraitor);
+        }catch (RebelNotExistsException err){
+            message.put("message", err.getMessage());
+            return ResponseEntity.status(400).body(message);
+        }
         return ResponseEntity.status(200).body(new HashMap<String, String>() {{
-            put("message", isTraitor ? "The rebel betrayed the resistance" : "the rebel is not a traitor");
+            put("message", isTraitor.toString());
         }});
     }
 }

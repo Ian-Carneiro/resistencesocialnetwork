@@ -21,6 +21,10 @@ public class RebelItemController {
     @ApiOperation(value = "Retorna a média de items de todos os rebeldes")
     private ResponseEntity<Map<String, String>> averageItems() {
         Map<String, String> percentage = rebelItemService.averageItems();
+        if (percentage.size()==0){
+            percentage.put("message", "No items were distributed.");
+            return ResponseEntity.status(200).body(percentage);
+        }
         return ResponseEntity.status(200).body(percentage);
     }
 
