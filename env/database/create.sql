@@ -1,0 +1,10 @@
+create table item (id varchar(255) not null, name varchar(255), points int4, primary key (id));
+create table rebel (id varchar(255) not null, age int4, genre varchar(255), location_latitude float4, location_longitude float4, location_name varchar(255), name varchar(255), treason_report_num int4, accused_id varchar(255), primary key (id));
+create table rebel_accusers (rebel_id varchar(255) not null, accusers_id varchar(255) not null);
+create table rebel_item (id varchar(255) not null, num_items int4, item_id varchar(255), rebel_id varchar(255), primary key (id));
+alter table rebel_accusers add constraint UK_fek6ydgsgvi7nheg81m4c01eu unique (accusers_id);
+alter table rebel add constraint FKe26cma7thrxgn44jbyj80em9f foreign key (accused_id) references rebel;
+alter table rebel_accusers add constraint FK6eijjqg3ywu1jnq0cyf0snpxb foreign key (accusers_id) references rebel;
+alter table rebel_accusers add constraint FKknv7x2d4i2sc3t65mv1ljsfri foreign key (rebel_id) references rebel;
+alter table rebel_item add constraint FK92b84dao62qmgg7y6lu0p2ei0 foreign key (item_id) references item;
+alter table rebel_item add constraint FK9omimtbnx7c951vhpnjscqlgn foreign key (rebel_id) references rebel;

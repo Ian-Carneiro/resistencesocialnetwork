@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/ResistenceDataset
+    username: resistence
+    password: ZLn4W3LPanW2hZyF
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQL9Dialect
+#    show-sql: true
+#    hibernate:
+#      ddl-auto: create
+#    generate-ddl: true
+
